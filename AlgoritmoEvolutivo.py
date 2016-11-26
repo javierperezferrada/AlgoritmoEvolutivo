@@ -20,7 +20,8 @@ class MyApplication():
         linea = archivo.readline()
 
     #print positions
-        for px,py in positions:
+    canDoor = []
+    for px,py in positions:
         #print 'px'
         #print px
         #print 'py'
@@ -29,13 +30,20 @@ class MyApplication():
         #print positions[px,py]
         if positions[px,py] == '64':
             #if is wall check around
-            print 'muro'
-            #pluspx = int(px) + 1
-            print positions[str(int(px)+1),py]
-            print positions[px,str(int(py)-1)]
-            print positions[str(int(px)-1),py]
-            print positions[px,str(int(py)+1)]
-
+            arround = [positions[str(int(px)+1),py],positions[px,str(int(py)-1)],
+                    positions[str(int(px)-1),py],positions[px,str(int(py)+1)]]
+            #print arround
+            interior = False
+            exterior = False
+            for a in arround:
+                if a == '0':
+                    interior = True
+                if a == '2':
+                    exterior = True
+            if interior == True and exterior == True:
+                #can ubicated Door in the point px py
+                canDoor.append(px+' '+py)
+    print canDoor
 
 if __name__ == "__main__":
     app = MyApplication()
