@@ -20,11 +20,21 @@ class MyApplication():
         linea = archivo.readline()
 
     #print positions
-    for px,py in positions:
-        print 'px'
-        print px
-        print 'py'
-        print py
+        for px,py in positions:
+        #print 'px'
+        #print px
+        #print 'py'
+        #print py
+        #print 'value'
+        #print positions[px,py]
+        if positions[px,py] == '64':
+            #if is wall check around
+            print 'muro'
+            #pluspx = int(px) + 1
+            print positions[str(int(px)+1),py]
+            print positions[px,str(int(py)-1)]
+            print positions[str(int(px)-1),py]
+            print positions[px,str(int(py)+1)]
 
 
 if __name__ == "__main__":
