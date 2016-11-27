@@ -1,6 +1,7 @@
 import random
 import uuid
 from pyelasticsearch import ElasticSearch
+import os
 
 es = ElasticSearch('http://localhost:9202/')
 
@@ -46,20 +47,20 @@ def readPlan(planName):
 def generatePoblation(n,universe):
     #This function generate a poblation with n random individuals of five doors
     #save individuals in ElasticSearch
-    poblation = {}
+    #poblation = {}
     rangeRandom = len(universe)
     for i in range(n):
-        poblation[i] = {'adn':[]}
+        poblation = {'adn':[]}
         for j in range(5):
-            poblation[i]['adn'].append(universe[random.randint(0, rangeRandom-1)])
+            poblation['adn'].append(universe[random.randint(0, rangeRandom-1)])
         try:
             responseElastic = es.index('ia',
                                 'individual',
-                                poblation[i])
+                                poblation)
         except Exception as e:
             print e
     #print poblation #to test generatePoblation
-    return poblation
+    #return poblation
 
 def simulate():
     #simulate all individuals in poblation pobl
@@ -75,8 +76,33 @@ def simulate():
         print e
     #print allIndividuals
     data = allIndividuals['hits']['hits']
+
     for key in data:
-        print key['_source']['adn']
+        #print key
+        #print len(key['_source']['adn'])
+        #CREAR ARCHIVO Y METER key['_source']['adn'][cesar]
+        combi_puertas = open("doors.plan", "w+")
+        for cesar in range(len(key['_source']['adn'])):
+            #print key['_source']['adn'][cesar]
+            combi_puertas.write(key['_source']['adn'][cesar]+" \n")
+            #combi_puertas.write("\n")
+        os.system("java -Xmx1024m -Dfile.encoding=UTF-8 -cp NetLogo.jar org.nlogo.headless.Main --model escape4.nlogo --experiment simulation")
+        segundos = open("seconds.output", "r")
+        for linea in segundos:
+            print "segundos: %s" % (linea)
+            queryDoc = {'time':linea}
+
+        try:
+            es.update('ia','individual',key['_id'],doc=queryDoc)
+        except Exception as e:
+            print e
+        #EN VEZ DE IMPRIMIR, CREAR ARCHIVO 
+        #
+        #
+        #
+        #
+        #
+        #
         #print i
         #print pobl[i]
         #por ahora esto tiempos son aleatorios
@@ -116,7 +142,7 @@ class AlgoritmoEvolutivo():
     #all points where can door ubicated
     allCanDoor = readPlan('plan.plan')
     #generate n poblations of combinated five random points with doors
-    #poblation = generatePoblation(100, allCanDoor)
+    #generatePoblation(100, allCanDoor)
     #evaluate all individuals in poblation
     simulate()
     #evaluate results
@@ -141,4 +167,3 @@ class AlgoritmoEvolutivo():
 
 if __name__ == "__main__":
     app = AlgoritmoEvolutivo()
-
