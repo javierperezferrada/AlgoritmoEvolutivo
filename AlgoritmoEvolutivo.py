@@ -1,4 +1,8 @@
+import random
+
 def readPlan(planName):
+    #This function read de plan
+    #return a array with all posible door points
     archivo = open(planName)
     #save positions and objects
     positions = {}
@@ -45,14 +49,29 @@ def readPlan(planName):
     #print canDoor #observate to test readPlan function
     return canDoor
 
+def generatePoblation(n,universe):
+    #This function generate a poblation with n random individuals of five doors
+    #return a object with n individuals
+    print 'This function generate a poblation with n random individuals'
+    poblation = {}
+    rangeRandom = len(universe)
+    for i in range(n):
+        poblation[i] = []
+        for j in range(5):
+            poblation[i].append(universe[random.randint(0, rangeRandom)])
+    #print poblation to test generatePoblation
+    return poblation
+
 #main AlgoritmoEvolutivo
 class AlgoritmoEvolutivo():
     #all points where can door ubicated
     allCanDoor = readPlan('plan.plan')
-    #generate n poblations of combinated five points with doors
+    #generate n poblations of combinated five random points with doors
+    poblation = generatePoblation(10, allCanDoor)
+    print poblation
+
 
 
 
 if __name__ == "__main__":
     app = AlgoritmoEvolutivo()
-
