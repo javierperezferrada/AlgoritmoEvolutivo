@@ -163,11 +163,11 @@ class AlgoritmoEvolutivo():
     #all points where can door ubicated
     allCanDoor = readPlan('plan.plan')
     #generate n poblations of combinated five random points with doors
-    #generatePoblation(100, allCanDoor)
+    generatePoblation(100, allCanDoor)
     #evaluate all individuals in poblation
     simulate()
     #evaluate results
-    selection()
+    selection(10)
     #selectBest(poblation,10)
     #pair poblation
     #childrens = pair(poblation)
