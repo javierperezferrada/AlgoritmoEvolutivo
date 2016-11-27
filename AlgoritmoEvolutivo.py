@@ -1,6 +1,5 @@
-class MyApplication():
-    #read plan
-    archivo = open('plan.plan')
+def readPlan(planName):
+    archivo = open(planName)
     #save positions and objects
     positions = {}
     linea = archivo.readline()
@@ -19,7 +18,7 @@ class MyApplication():
 
         linea = archivo.readline()
 
-    #print positions
+    #save points where can door ubicated
     canDoor = []
     for px,py in positions:
         #print 'px'
@@ -43,7 +42,17 @@ class MyApplication():
             if interior == True and exterior == True:
                 #can ubicated Door in the point px py
                 canDoor.append(px+' '+py)
-    print canDoor
+    #print canDoor #observate to test readPlan function
+    return canDoor
+
+#main AlgoritmoEvolutivo
+class AlgoritmoEvolutivo():
+    #all points where can door ubicated
+    allCanDoor = readPlan('plan.plan')
+    #generate n poblations of combinated five points with doors
+
+
 
 if __name__ == "__main__":
-    app = MyApplication()
+    app = AlgoritmoEvolutivo()
+
