@@ -89,6 +89,7 @@ def simulate():
         os.system("java -Xmx1024m -Dfile.encoding=UTF-8 -cp NetLogo.jar org.nlogo.headless.Main --model escape4.nlogo --experiment simulation")
         segundos = open("seconds.output", "r")
         for linea in segundos:
+            linea = linea.rstrip("\n")
             print "segundos: %s" % (linea)
             queryDoc = {'time':linea}
 
