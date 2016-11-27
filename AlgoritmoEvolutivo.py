@@ -47,10 +47,9 @@ def readPlan(planName):
 def generatePoblation(n,universe):
     #This function generate a poblation with n random individuals of five doors
     #save individuals in ElasticSearch
-    #poblation = {}
     rangeRandom = len(universe)
     for i in range(n):
-        poblation = {'adn':[]}
+        poblation = {'adn':[],'simulated':'not'}
         for j in range(5):
             poblation['adn'].append(universe[random.randint(0, rangeRandom-1)])
         try:
@@ -59,14 +58,16 @@ def generatePoblation(n,universe):
                                 poblation)
         except Exception as e:
             print e
-    #print poblation #to test generatePoblation
-    #return poblation
 
 def simulate():
     #simulate all individuals in poblation pobl
     #agregate time for each individual in pobl
     #query = {'sort':[{'art_date':{'order':'asc'}}],'query':{'match_all':{}},}
-    query = {'query':{'match_all':{}},}
+    query = {'query':{'bool':{
+                'filter':[
+                {'term':{'simulated':'not'}}
+                ]
+    }},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -91,7 +92,7 @@ def simulate():
         for linea in segundos:
             linea = linea.rstrip("\n")
             print "segundos: %s" % (linea)
-            queryDoc = {'time':linea}
+            queryDoc = {'time':linea,'simulated':'yes'}
 
         try:
             es.update('ia','individual',key['_id'],doc=queryDoc)
@@ -112,19 +113,38 @@ def simulate():
         #tambien existe un codigo java que los une directamente
         #key['_source']['time'] = random.randint(10,100)
 
-def evaluate(pobl):
+def selection(nPar):
     #evaluate result of simulate
-    #asigned points a each individual depend lower
-    bestTime = 999999999999999999999999999999
-    worstTime = 0
-    for i in pobl:
-        if pobl[i]['time'] <= bestTime:
-            bestTime = pobl[i]['time']
-        if pobl[i]['time'] >= worstTime:
-            worstTime = pobl[i]['time']
-    #asigned point depend lower individual
-    for i in pobl:
-        pobl[i]['points'] = 1 - pobl[i]['time']/float(worstTime)
+    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
+    try:
+        #request all articles to ElasticSearch
+        totalInd = es.count(query,index='ia')
+        bestIndividuals = es.search(query,size=nPar, index='ia')
+    except Exception as e:
+        #if fail conection to ElasticSearch
+        print e
+    #print bestIndividuals
+    data = bestIndividuals['hits']['hits']
+    for i in range(nPar/2):
+        ind1 = bestIndividuals['hits']['hits'][i]['_source']['adn']
+        ind2 = bestIndividuals['hits']['hits'][i+1]['_source']['adn']
+        #print ind1
+        #print ind2
+        new = []
+        for j in range(5):
+            rand = random.randint(0,10)
+            if rand<=5:
+                new.append(ind1[j])
+            else:
+                new.append(ind2[j])
+        newIndividual = {'adn':new}
+        try:
+            responseElastic = es.index('ia',
+                                'individual',
+                                newIndividual)
+        except Exception as e:
+            print e
+    simulate()
 
 def pair(pobl):
     #this function pair poblation pobl
@@ -147,7 +167,7 @@ class AlgoritmoEvolutivo():
     #evaluate all individuals in poblation
     simulate()
     #evaluate results
-    #evaluate(poblation)
+    selection()
     #selectBest(poblation,10)
     #pair poblation
     #childrens = pair(poblation)
