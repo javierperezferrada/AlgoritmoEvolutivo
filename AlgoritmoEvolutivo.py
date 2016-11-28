@@ -5,6 +5,8 @@ import os
 
 es = ElasticSearch('http://localhost:9202/')
 
+
+
 def readPlan(planName):
     #This function read de plan
     #return a array with all posible door points
@@ -92,7 +94,7 @@ def simulate():
         for linea in segundos:
             linea = linea.rstrip("\n")
             print "segundos: %s" % (linea)
-            queryDoc = {'time':linea,'simulated':'yes'}
+            queryDoc = {'time':int(linea),'simulated':'yes'}
 
         try:
             es.update('ia','individual',key['_id'],doc=queryDoc)
@@ -158,20 +160,45 @@ def selectBest(pobl,npar):
     #return npar best individuals
 
 
+def summary():
+    #evaluate result of simulate
+    query = {'aggs': { 'avg_time' : {'avg': { 'field': 'time'}}}}
+    query2 = {'aggs': { 'min_time' : {'min': { 'field': 'time'}}}}
+    try:
+        #request all articles to ElasticSearch
+        totalInd = es.count(query,index='ia')
+        #print totalInd
+        average = es.search(query, index='ia')
+        minimum = es.search(query2, index='ia')
+        print average['aggregations']['avg_time']['value']
+        print minimum['aggregations']['min_time']['value']
+    except Exception as e:
+        #if fail conection to ElasticSearch
+        print e
+    newPoblationResult = {'minimum':minimum['aggregations']['min_time']['value'],'average':average['aggregations']['avg_time']['value']}
+    try:
+        es.index('ia',
+                'results',
+                newPoblationResult)
+    except Exception as e:
+        print e
+
+
 #main AlgoritmoEvolutivo
 class AlgoritmoEvolutivo():
     #all points where can door ubicated
-    allCanDoor = readPlan('plan.plan')
+    #allCanDoor = readPlan('plan.plan')
     #generate n poblations of combinated five random points with doors
-    generatePoblation(100, allCanDoor)
+    #generatePoblation(20, allCanDoor)
     #evaluate all individuals in poblation
-    simulate()
+    #simulate()
     #evaluate results
-    selection(10)
+    #selection(10)
     #selectBest(poblation,10)
     #pair poblation
     #childrens = pair(poblation)
     #print poblation
+    #summary()
     query = {'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
