@@ -3,6 +3,7 @@ import uuid
 from pyelasticsearch import ElasticSearch
 import os
 import time
+import json
 
 es = ElasticSearch('http://localhost:9202/')
 
@@ -244,6 +245,7 @@ class AlgoritmoEvolutivo():
                     {'term':{'simulated':False}}
                     ]
         }},}
+        #query = {'query':{'match_all':{}},}
         try:
             #request all articles to ElasticSearch
             totalInd = es.count(query,index='ia')
@@ -254,6 +256,9 @@ class AlgoritmoEvolutivo():
         print totalInd
         #print allIndividuals
         i+=1
+    #f = open("results.json", "a")
+    #f.write(json.dumps(allIndividuals))
+    #f.close()
 
 
 
