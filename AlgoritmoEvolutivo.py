@@ -129,7 +129,7 @@ def simulate():
 
 def selection(nPar):
     #evaluate result of simulate
-    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
+    query = {'sort':[{'time':{'order':'desc'}}],'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -180,11 +180,14 @@ def summary():
         minimum = es.search(query2, index='ia')
         print average['aggregations']['avg_time']['value']
         print minimum['aggregations']['min_time']['value']
-        f = open("grafico.csv", "a")
-        f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+"\n")
+        #f = open("grafico.csv", "a")
+        #f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+","+minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn']+"\n")
         query3 = {"query" : {"constant_score" : { "filter" : {"term" : { "time" : minimum['aggregations']['min_time']['value']}}}}}
         minimumComb = es.search(query3, index='ia')
         print minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn'] #se imprime la ultima combinacion de puertas de menor tiempo
+        f = open("grafico.csv", "a")
+        f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+","+str(minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn'])+"\n")
+        
     except Exception as e:
         #if fail conection to ElasticSearch
         print e
@@ -200,7 +203,7 @@ def summary():
 def mutation(nPar,allCanDoor):
     print len(allCanDoor)
     #evaluate result of simulate
-    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
+    query = {'sort':[{'time':{'order':'desc'}}],'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -312,7 +315,7 @@ class AlgoritmoEvolutivo():
             i+=1
     else: #se crean hijos y se mutan
         #mutaciones
-        while aux<1500:
+        while aux<2125:
             mutation(50,allCanDoor)
             query = {'query':{'match_all':{}},}
             try:
