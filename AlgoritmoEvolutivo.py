@@ -163,38 +163,9 @@ def selection(nPar):
         except Exception as e:
             print e
         i+=2
-    '''for i in range(nPar/2):
-        ind1 = bestIndividuals['hits']['hits'][i]['_source']['adn']
-        ind2 = bestIndividuals['hits']['hits'][i+1]['_source']['adn']
-        #print ind1
-        #print ind2
-        new = []
-        for j in range(5):
-            rand = random.randint(0,10)
-            if rand<=5:
-                new.append(ind1[j])
-            else:
-                new.append(ind2[j])
-        newIndividual = {'adn':new,'simulated':'not'}
-        try:
-            responseElastic = es.index('ia',
-                                'individual',
-                                newIndividual)
-            print "hijo agregado"
-        except Exception as e:
-            print e'''
+
     simulate()
 
-def pair(pobl):
-    #this function pair poblation pobl
-    return pobl
-    #return a object with the news individuals
-
-def selectBest(pobl,npar):
-    #select npar best points individuals
-    for i in pobl:
-        print i
-    #return npar best individuals
 
 
 def summary():
@@ -211,9 +182,13 @@ def summary():
         print minimum['aggregations']['min_time']['value']
         f = open("grafico.csv", "a")
         f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+"\n")
+        query3 = {"query" : {"constant_score" : { "filter" : {"term" : { "time" : minimum['aggregations']['min_time']['value']}}}}}
+        minimumComb = es.search(query3, index='ia')
+        print minimumComb['hits']['hits'][0]['_source']['adn']
     except Exception as e:
         #if fail conection to ElasticSearch
         print e
+    
     newPoblationResult = {'minimum':minimum['aggregations']['min_time']['value'],'average':average['aggregations']['avg_time']['value'],'poblation':totalInd['count']}
     try:
         es.index('results',
@@ -222,41 +197,107 @@ def summary():
     except Exception as e:
         print e
 
+def mutation(nPar,allCanDoor):
+    print len(allCanDoor)
+    #evaluate result of simulate
+    query = {'sort':[{'time':{'order':'des'}}],'query':{'match_all':{}},}
+    try:
+        #request all articles to ElasticSearch
+        totalInd = es.count(query,index='ia')
+        print "total:"+str(totalInd)
+        bestIndividuals = es.search(query,size=nPar, index='ia')
+    except Exception as e:
+        #if fail conection to ElasticSearch
+        print e
+    #print bestIndividuals
+    data = bestIndividuals['hits']['hits']
+    print data
+    i=0
+    while i<nPar:
+        print i
+        ind1 = bestIndividuals['hits']['hits'][i]['_source']['adn']
+        ind2 = bestIndividuals['hits']['hits'][i+1]['_source']['adn']
+        print ind1
+        print ind2
+        new = []
+        for j in range(5):
+            rand = random.randint(0,10)
+            if rand<=5:
+                esp = ind1[j].index(' ')
+                x=int(ind1[j][0:esp])
+                print x                
+                y=int(ind1[j][esp+1:len(ind1[j])])
+                print y
+                if allCanDoor.count(str(x+1)+" "+str(y)) > 0: new.append(str(x+1)+" "+str(y)) #si le sumamos uno a X y es puerta, se crea el hijo
+                if allCanDoor.count(str(x)+" "+str(y+1)) > 0: new.append(str(x)+" "+str(y+1))#si le sumamos uno a Y y es puerta, se crea el hijo
+                
+            else:
+                esp = ind2[j].index(' ')
+                x=int(ind2[j][0:esp])
+                print x                
+                y=int(ind2[j][esp+1:len(ind2[j])])
+                print y
+                if allCanDoor.count(str(x+1)+" "+str(y)) > 0: new.append(str(x+1)+" "+str(y))
+                if allCanDoor.count(str(x)+" "+str(y+1)) > 0: new.append(str(x)+" "+str(y+1))
+                #print allCanDoor.count(ind2[j])
+            print new
+        newIndividual = {'adn':new,'simulated':False}
+        try:
+            responseElastic = es.index('ia',
+                                'individual',
+                                newIndividual)
+            print "hijo agregado"
+        except Exception as e:
+            print e
+        i+=2
+    simulate()
+
 
 #main AlgoritmoEvolutivo
 class AlgoritmoEvolutivo():
-    i=0
-    while i<10:
-        #all points where can door ubicated
-        allCanDoor = readPlan('plan.plan')
-        #generate n poblations of combinated five random points with doors
-        generatePoblation(20, allCanDoor)
-        #evaluate all individuals in poblation
-        simulate()
-        #evaluate results
-        selection(10)
-        #selectBest(poblation,10)
-        #pair poblation
-        #childrens = pair(poblation)
-        #print poblation
-        summary()
-        query = {'query':{'bool':{
-                    'filter':[
-                    {'term':{'simulated':False}}
-                    ]
-        }},}
-        #query = {'query':{'match_all':{}},}
-        try:
-            #request all articles to ElasticSearch
-            totalInd = es.count(query,index='ia')
-            allIndividuals = es.search(query,size=totalInd['count'], index='ia')
-        except Exception as e:
-            #if fail conection to ElasticSearch
-            print e
+    query = {'query':{'match_all':{}},}
+    try:
+        #request all articles to ElasticSearch
+        totalInd = es.count(query,index='ia')
+        allIndividuals = es.search(query,size=totalInd['count'], index='ia')
         print totalInd
-        #print allIndividuals
-        i+=1
-    #f = open("results.json", "a")
+    except Exception as e:
+        #if fail conection to ElasticSearch
+        print e
+    allCanDoor = readPlan('plan.plan')
+    if totalInd['count']<1700:
+        i=0
+        while i<70:
+            #all points where can door ubicated
+            #allCanDoor = readPlan('plan.plan')
+            #generate n poblations of combinated five random points with doors
+            generatePoblation(20, allCanDoor)
+            #evaluate all individuals in poblation
+            simulate()
+            #evaluate results
+            selection(10)
+            summary()
+            query = {'query':{'bool':{
+                        'filter':[
+                        {'term':{'simulated':False}}
+                        ]
+            }},}
+            #query = {'query':{'match_all':{}},}
+            try:
+                #request all articles to ElasticSearch
+                totalInd = es.count(query,index='ia')
+                allIndividuals = es.search(query,size=totalInd['count'], index='ia')
+            except Exception as e:
+                #if fail conection to ElasticSearch
+                print e
+            #print allIndividuals
+            #print allIndividuals
+            i+=1
+    else:
+        #mutaciones
+        mutation(10,allCanDoor)
+
+    #f = open("10peores-apareamientoAleatorio.json", "a")
     #f.write(json.dumps(allIndividuals))
     #f.close()
 
