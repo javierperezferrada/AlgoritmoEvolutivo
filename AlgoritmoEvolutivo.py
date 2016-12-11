@@ -184,7 +184,7 @@ def summary():
         f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+"\n")
         query3 = {"query" : {"constant_score" : { "filter" : {"term" : { "time" : minimum['aggregations']['min_time']['value']}}}}}
         minimumComb = es.search(query3, index='ia')
-        print minimumComb['hits']['hits'][0]['_source']['adn']
+        print minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn']
     except Exception as e:
         #if fail conection to ElasticSearch
         print e
@@ -200,7 +200,7 @@ def summary():
 def mutation(nPar,allCanDoor):
     print len(allCanDoor)
     #evaluate result of simulate
-    query = {'sort':[{'time':{'order':'des'}}],'query':{'match_all':{}},}
+    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -211,36 +211,47 @@ def mutation(nPar,allCanDoor):
         print e
     #print bestIndividuals
     data = bestIndividuals['hits']['hits']
-    print data
+    #print data
+    aux2 = [-1,1]
     i=0
     while i<nPar:
-        print i
+        #print i
         ind1 = bestIndividuals['hits']['hits'][i]['_source']['adn']
         ind2 = bestIndividuals['hits']['hits'][i+1]['_source']['adn']
-        print ind1
-        print ind2
+        #print ind1
+        #print ind2
         new = []
         for j in range(5):
             rand = random.randint(0,10)
             if rand<=5:
+                mut = random.choice(aux2)
                 esp = ind1[j].index(' ')
                 x=int(ind1[j][0:esp])
-                print x                
+                #print x                
                 y=int(ind1[j][esp+1:len(ind1[j])])
-                print y
-                if allCanDoor.count(str(x+1)+" "+str(y)) > 0: new.append(str(x+1)+" "+str(y)) #si le sumamos uno a X y es puerta, se crea el hijo
-                if allCanDoor.count(str(x)+" "+str(y+1)) > 0: new.append(str(x)+" "+str(y+1))#si le sumamos uno a Y y es puerta, se crea el hijo
+                #print y
+                if allCanDoor.count(str(x+mut)+" "+str(y)) > 0: 
+                    print str(x+mut)+" "+str(y)
+                    new.append(str(x+mut)+" "+str(y)) #si le sumamos uno a X y es puerta, se crea el hijo
+                if allCanDoor.count(str(x)+" "+str(y+mut)) > 0: 
+                    print str(x)+" "+str(y+mut)
+                    new.append(str(x)+" "+str(y+mut))#si le sumamos uno a Y y es puerta, se crea el hijo
                 
             else:
+                mut = random.choice(aux2)
                 esp = ind2[j].index(' ')
                 x=int(ind2[j][0:esp])
-                print x                
+                #print x                
                 y=int(ind2[j][esp+1:len(ind2[j])])
-                print y
-                if allCanDoor.count(str(x+1)+" "+str(y)) > 0: new.append(str(x+1)+" "+str(y))
-                if allCanDoor.count(str(x)+" "+str(y+1)) > 0: new.append(str(x)+" "+str(y+1))
+                #print y
+                if allCanDoor.count(str(x+mut)+" "+str(y)) > 0:
+                    print str(x+mut)+" "+str(y)
+                    new.append(str(x+mut)+" "+str(y))
+                if allCanDoor.count(str(x)+" "+str(y+mut)) > 0:
+                    print str(x)+" "+str(y+mut)
+                    new.append(str(x)+" "+str(y+mut))
                 #print allCanDoor.count(ind2[j])
-            print new
+        print new
         newIndividual = {'adn':new,'simulated':False}
         try:
             responseElastic = es.index('ia',
@@ -251,23 +262,27 @@ def mutation(nPar,allCanDoor):
             print e
         i+=2
     simulate()
+    summary()
 
 
 #main AlgoritmoEvolutivo
 class AlgoritmoEvolutivo():
+
+    aux=0
     query = {'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
         allIndividuals = es.search(query,size=totalInd['count'], index='ia')
         print totalInd
+        aux=totalInd['count']
     except Exception as e:
         #if fail conection to ElasticSearch
         print e
     allCanDoor = readPlan('plan.plan')
-    if totalInd['count']<1700:
+    if aux<500:
         i=0
-        while i<70:
+        while aux<500:
             #all points where can door ubicated
             #allCanDoor = readPlan('plan.plan')
             #generate n poblations of combinated five random points with doors
@@ -277,16 +292,18 @@ class AlgoritmoEvolutivo():
             #evaluate results
             selection(10)
             summary()
-            query = {'query':{'bool':{
+            '''query = {'query':{'bool':{
                         'filter':[
                         {'term':{'simulated':False}}
                         ]
-            }},}
-            #query = {'query':{'match_all':{}},}
+            }},}'''
+            query = {'query':{'match_all':{}},}
             try:
                 #request all articles to ElasticSearch
                 totalInd = es.count(query,index='ia')
-                allIndividuals = es.search(query,size=totalInd['count'], index='ia')
+                print totalInd['count']
+                aux=totalInd['count']
+                #allIndividuals = es.search(query,size=totalInd['count'], index='ia')
             except Exception as e:
                 #if fail conection to ElasticSearch
                 print e
@@ -295,8 +312,18 @@ class AlgoritmoEvolutivo():
             i+=1
     else:
         #mutaciones
-        mutation(10,allCanDoor)
-
+        while aux<1500:
+            mutation(50,allCanDoor)
+            query = {'query':{'match_all':{}},}
+            try:
+                #request all articles to ElasticSearch
+                totalInd = es.count(query,index='ia')
+                print totalInd['count']
+                aux=totalInd['count']
+                #allIndividuals = es.search(query,size=totalInd['count'], index='ia')
+            except Exception as e:
+                #if fail conection to ElasticSearch
+                print e
     #f = open("10peores-apareamientoAleatorio.json", "a")
     #f.write(json.dumps(allIndividuals))
     #f.close()
