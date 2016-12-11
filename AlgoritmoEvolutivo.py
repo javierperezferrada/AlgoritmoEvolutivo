@@ -184,7 +184,7 @@ def summary():
         f.write(str(totalInd['count'])+","+str(average['aggregations']['avg_time']['value'])+","+str(minimum['aggregations']['min_time']['value'])+"\n")
         query3 = {"query" : {"constant_score" : { "filter" : {"term" : { "time" : minimum['aggregations']['min_time']['value']}}}}}
         minimumComb = es.search(query3, index='ia')
-        print minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn']
+        print minimumComb['hits']['hits'][len(minimumComb['hits']['hits'])-1]['_source']['adn'] #se imprime la ultima combinacion de puertas de menor tiempo
     except Exception as e:
         #if fail conection to ElasticSearch
         print e
@@ -224,7 +224,7 @@ def mutation(nPar,allCanDoor):
         for j in range(5):
             rand = random.randint(0,10)
             if rand<=5:
-                mut = random.choice(aux2)
+                mut = random.choice(aux2) #se suma o resta un valor a una coordenada aleatoriamente
                 esp = ind1[j].index(' ')
                 x=int(ind1[j][0:esp])
                 #print x                
@@ -280,7 +280,7 @@ class AlgoritmoEvolutivo():
         #if fail conection to ElasticSearch
         print e
     allCanDoor = readPlan('plan.plan')
-    if aux<500:
+    if aux<500: #se crea poblacion de padres e hijos
         i=0
         while aux<500:
             #all points where can door ubicated
@@ -310,7 +310,7 @@ class AlgoritmoEvolutivo():
             #print allIndividuals
             #print allIndividuals
             i+=1
-    else:
+    else: #se crean hijos y se mutan
         #mutaciones
         while aux<1500:
             mutation(50,allCanDoor)
