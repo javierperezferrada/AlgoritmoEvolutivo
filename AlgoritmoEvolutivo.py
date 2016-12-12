@@ -129,7 +129,7 @@ def simulate():
 
 def selection(nPar):
     #evaluate result of simulate
-    query = {'sort':[{'time':{'order':'desc'}}],'query':{'match_all':{}},}
+    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -154,14 +154,15 @@ def selection(nPar):
                 new.append(ind1[j])
             else:
                 new.append(ind2[j])
-        newIndividual = {'adn':new,'simulated':False}
-        try:
-            responseElastic = es.index('ia',
-                                'individual',
-                                newIndividual)
-            print "hijo agregado"
-        except Exception as e:
-            print e
+        if len(new)==5:
+            newIndividual = {'adn':new,'simulated':False}
+            try:
+                responseElastic = es.index('ia',
+                                    'individual',
+                                    newIndividual)
+                print "hijo agregado"
+            except Exception as e:
+                print e
         i+=2
 
     simulate()
@@ -203,7 +204,7 @@ def summary():
 def mutation(nPar,allCanDoor):
     print len(allCanDoor)
     #evaluate result of simulate
-    query = {'sort':[{'time':{'order':'desc'}}],'query':{'match_all':{}},}
+    query = {'sort':[{'time':{'order':'asc'}}],'query':{'match_all':{}},}
     try:
         #request all articles to ElasticSearch
         totalInd = es.count(query,index='ia')
@@ -221,48 +222,53 @@ def mutation(nPar,allCanDoor):
         #print i
         ind1 = bestIndividuals['hits']['hits'][i]['_source']['adn']
         ind2 = bestIndividuals['hits']['hits'][i+1]['_source']['adn']
-        #print ind1
-        #print ind2
+        print ind1
+        print ind2
         new = []
         for j in range(5):
             rand = random.randint(0,10)
+            try:
+                esp = ind1[j].index(" ")
+                esp = ind2[j].index(" ")
+            except:
+                j=j-1
             if rand<=5:
                 mut = random.choice(aux2) #se suma o resta un valor a una coordenada aleatoriamente
-                esp = ind1[j].index(' ')
+                esp = ind1[j].index(" ")
                 x=int(ind1[j][0:esp])
                 #print x                
                 y=int(ind1[j][esp+1:len(ind1[j])])
                 #print y
                 if allCanDoor.count(str(x+mut)+" "+str(y)) > 0: 
-                    print str(x+mut)+" "+str(y)
+                    #print str(x+mut)+" "+str(y)
                     new.append(str(x+mut)+" "+str(y)) #si le sumamos uno a X y es puerta, se crea el hijo
                 if allCanDoor.count(str(x)+" "+str(y+mut)) > 0: 
-                    print str(x)+" "+str(y+mut)
+                    #print str(x)+" "+str(y+mut)
                     new.append(str(x)+" "+str(y+mut))#si le sumamos uno a Y y es puerta, se crea el hijo
                 
             else:
                 mut = random.choice(aux2)
-                esp = ind2[j].index(' ')
+                esp = ind2[j].index(" ")
                 x=int(ind2[j][0:esp])
                 #print x                
                 y=int(ind2[j][esp+1:len(ind2[j])])
                 #print y
                 if allCanDoor.count(str(x+mut)+" "+str(y)) > 0:
-                    print str(x+mut)+" "+str(y)
+                    #print str(x+mut)+" "+str(y)
                     new.append(str(x+mut)+" "+str(y))
                 if allCanDoor.count(str(x)+" "+str(y+mut)) > 0:
-                    print str(x)+" "+str(y+mut)
+                    #print str(x)+" "+str(y+mut)
                     new.append(str(x)+" "+str(y+mut))
                 #print allCanDoor.count(ind2[j])
-        print new
-        newIndividual = {'adn':new,'simulated':False}
-        try:
-            responseElastic = es.index('ia',
-                                'individual',
-                                newIndividual)
-            print "hijo agregado"
-        except Exception as e:
-            print e
+        if len(new)==5:
+            newIndividual = {'adn':new,'simulated':False}
+            try:
+                responseElastic = es.index('ia',
+                                    'individual',
+                                    newIndividual)
+                print "hijo agregado"
+            except Exception as e:
+                print e
         i+=2
     simulate()
     summary()
